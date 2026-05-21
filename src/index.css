@@ -83,9 +83,39 @@
   direction: ltr;
 }
 
+.dark {
+  --color-background: #1d1c16;
+  --color-surface: #1d1c16;
+  --color-paper-warm: #25241e;
+  --color-surface-bright: #2a2924;
+  --color-surface-dim: #141310;
+  --color-surface-container-lowest: #100f0a;
+  --color-surface-container-low: #25241e;
+  --color-surface-container: #2a2924;
+  --color-surface-container-high: #32302a;
+  --color-surface-container-highest: #3a3933;
+  --color-surface-secondary: #2a2924;
+  --color-surface-variant: #32302a;
+  --color-ink-primary: #f5f0e6;
+  --color-ink-secondary: #b8b5a8;
+  --color-on-surface: #f5f0e6;
+  --color-on-surface-variant: #dbc1b9;
+  --color-on-background: #f5f0e6;
+  --color-primary: #ffb59e;
+  --color-primary-container: #7a2f15;
+  --color-on-primary-container: #ffdbd0;
+  --color-secondary-container: #48473d;
+  --color-on-secondary-container: #e6e2d5;
+  --color-outline: #88726c;
+  --color-outline-variant: #55433d;
+  --color-inverse-surface: #f5f0e6;
+  --color-inverse-on-surface: #32302a;
+  --color-inverse-primary: #99462a;
+}
+
 body {
-  background-color: #F9F7F2;
-  color: #1D1C16;
+  background-color: var(--color-paper-warm);
+  color: var(--color-ink-primary);
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
   margin: 0;

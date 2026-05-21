@@ -1,6 +1,5 @@
 import { useState } from 'react'
-
-type Theme = 'light' | 'dark' | 'system'
+import { useThemeStore, type Theme } from '../stores/themeStore'
 
 const THEMES: Theme[] = ['light', 'dark', 'system']
 
@@ -23,7 +22,8 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 }
 
 export default function Settings() {
-  const [theme, setTheme] = useState<Theme>('light')
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
   const [notif5min, setNotif5min] = useState(true)
   const [notifReset, setNotifReset] = useState(false)
 
