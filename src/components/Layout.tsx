@@ -39,51 +39,102 @@ interface LayoutProps {
 
 export default function Layout({ current, onNavigate, children }: LayoutProps) {
   const headerHidden = useScrollHidden()
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
     <div className="min-h-screen lg:flex font-body-md">
 
       {/* ── Desktop sidebar (lg+) ─────────────────────────── */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-60 lg:fixed lg:inset-y-0 bg-paper-warm border-r border-surface-container z-40">
-        <div className="px-6 py-5 border-b border-surface-container">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-accent-terracotta">sync</span>
-            <span className="font-headline-md text-[15px] font-medium text-ink-primary leading-snug">
-              Claude Token Tracker
-            </span>
-          </div>
+      <aside
+        className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-paper-warm border-r border-surface-container z-40 overflow-hidden transition-all duration-300 ease-in-out ${
+          collapsed ? 'lg:w-16' : 'lg:w-60'
+        }`}
+      >
+        {/* Brand */}
+        <div
+          className={`flex items-center border-b border-surface-container h-[68px] flex-shrink-0 transition-all duration-300 ${
+            collapsed ? 'justify-center px-2' : 'gap-3 px-6'
+          }`}
+        >
+          <span className="material-symbols-outlined text-accent-terracotta flex-shrink-0">sync</span>
+          <span
+            className={`font-headline-md text-[15px] font-medium text-ink-primary leading-snug whitespace-nowrap overflow-hidden transition-all duration-300 ${
+              collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'
+            }`}
+          >
+            Claude Token Tracker
+          </span>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-0.5" aria-label="Main navigation">
+        {/* Nav items */}
+        <nav className="flex-1 px-2 py-4 space-y-0.5" aria-label="Main navigation">
           {NAV_ITEMS.map(({ page, label, icon }) => {
             const active = current === page
             return (
               <button
                 key={page}
                 onClick={() => onNavigate(page)}
+                title={label}
+                aria-label={label}
                 aria-current={active ? 'page' : undefined}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
+                className={`w-full flex items-center py-3 rounded-xl transition-all duration-200 ${
+                  collapsed ? 'justify-center px-2' : 'gap-3 px-4'
+                } ${
                   active
                     ? 'bg-secondary-container text-primary'
                     : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-container'
                 }`}
               >
                 <span
-                  className="material-symbols-outlined text-[22px]"
+                  className="material-symbols-outlined text-[22px] flex-shrink-0"
                   style={active ? { fontVariationSettings: "'FILL' 1" } : undefined}
                 >
                   {icon}
                 </span>
-                <span className="font-label-md text-sm">{label}</span>
+                <span
+                  className={`font-label-md text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                    collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'
+                  }`}
+                >
+                  {label}
+                </span>
               </button>
             )
           })}
         </nav>
 
-        <div className="px-3 py-4 border-t border-surface-container">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-surface-container transition-colors text-ink-secondary hover:text-ink-primary">
-            <span className="material-symbols-outlined text-[22px]">account_circle</span>
-            <span className="font-label-md text-sm">Account</span>
+        {/* Account + collapse toggle */}
+        <div className="px-2 py-4 border-t border-surface-container space-y-0.5">
+          <button
+            title="Account"
+            aria-label="Account"
+            className={`w-full flex items-center py-3 rounded-xl hover:bg-surface-container transition-colors text-ink-secondary hover:text-ink-primary ${
+              collapsed ? 'justify-center px-2' : 'gap-3 px-4'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px] flex-shrink-0">account_circle</span>
+            <span
+              className={`font-label-md text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'
+              }`}
+            >
+              Account
+            </span>
+          </button>
+
+          <button
+            onClick={() => setCollapsed(v => !v)}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="w-full flex items-center justify-center py-3 rounded-xl hover:bg-surface-container transition-colors text-ink-secondary hover:text-ink-primary"
+          >
+            <span
+              className={`material-symbols-outlined text-[22px] flex-shrink-0 transition-transform duration-300 ${
+                collapsed ? '-rotate-180' : 'rotate-0'
+              }`}
+            >
+              chevron_left
+            </span>
           </button>
         </div>
       </aside>
@@ -95,7 +146,6 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
         }`}
       >
         <div className="flex items-center justify-between px-margin-mobile py-3">
-          {/* Brand */}
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-accent-terracotta text-[22px]">sync</span>
             <span className="font-headline-md text-[15px] font-medium text-ink-primary">
@@ -103,7 +153,6 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
             </span>
           </div>
 
-          {/* Nav icons */}
           <nav className="flex items-center gap-1" aria-label="Main navigation">
             {NAV_ITEMS.map(({ page, label, icon }) => {
               const active = current === page
@@ -111,6 +160,7 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
                 <button
                   key={page}
                   onClick={() => onNavigate(page)}
+                  title={label}
                   aria-label={label}
                   aria-current={active ? 'page' : undefined}
                   className={`p-2 rounded-lg transition-colors ${
@@ -131,8 +181,11 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
       </header>
 
       {/* ── Content area ──────────────────────────────────── */}
-      <div className="flex-1 lg:ml-60">
-        {/* pt offsets the single-row mobile header (~47px) + breathing room */}
+      <div
+        className={`flex-1 transition-all duration-300 ease-in-out ${
+          collapsed ? 'lg:ml-16' : 'lg:ml-60'
+        }`}
+      >
         <div className="pt-14 lg:pt-0">
           {children}
         </div>

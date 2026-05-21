@@ -16,7 +16,9 @@ export default function Dashboard() {
 
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const timeDisplay = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  const seconds = totalSeconds % 60
+  const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  const ss = String(seconds).padStart(2, '0')
   const dashOffset = CIRCUMFERENCE * (1 - totalSeconds / TOTAL_DURATION)
 
   return (
@@ -47,9 +49,10 @@ export default function Dashboard() {
             />
           </svg>
           <div className="absolute flex flex-col items-center">
-            <span className="text-5xl font-medium tracking-tight text-ink-primary tabular-nums">
-              {timeDisplay}
-            </span>
+            <div className="flex items-baseline gap-0.5 tabular-nums">
+              <span className="text-4xl font-medium tracking-tight text-ink-primary">{hhmm}</span>
+              <span className="text-2xl font-normal tracking-tight text-ink-primary/40">:{ss}</span>
+            </div>
             <span className="font-label-md text-ink-secondary mt-1">remaining</span>
           </div>
         </div>
