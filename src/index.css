@@ -19,6 +19,7 @@
   --color-on-secondary: #ffffff;
   --color-ink-secondary: #6B695E;
   --color-accent-terracotta: #D97757;
+  --color-accent-amber: #E8A33D;
   --color-error-container: #ffdad6;
   --color-primary-fixed: #ffdbd0;
   --color-on-tertiary-container: #00312b;
@@ -111,6 +112,7 @@
   --color-inverse-surface: #f5f0e6;
   --color-inverse-on-surface: #32302a;
   --color-inverse-primary: #99462a;
+  --color-error: #FF6B6B;
 }
 
 body {

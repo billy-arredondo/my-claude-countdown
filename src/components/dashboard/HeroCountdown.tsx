@@ -1,16 +1,20 @@
+import { TOTAL_5H } from '../../stores/countdownStore'
+import { colorForRemaining } from '../../utils/format'
+
 const RADIUS = 122
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
-type Props = { secondsLeft: number; totalDuration: number }
+type Props = { secondsLeft: number }
 
-export default function HeroCountdown({ secondsLeft, totalDuration }: Props) {
+export default function HeroCountdown({ secondsLeft }: Props) {
   const hours = Math.floor(secondsLeft / 3600)
   const mins = Math.floor((secondsLeft % 3600) / 60)
   const secs = secondsLeft % 60
   const hhmm = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
   const ss = String(secs).padStart(2, '0')
-  const dashOffset = CIRCUMFERENCE * (1 - secondsLeft / totalDuration)
-  const pctRemaining = Math.round((secondsLeft / totalDuration) * 100)
+  const pctRemaining = Math.min(100, Math.round((secondsLeft / TOTAL_5H) * 100))
+  const dashOffset = CIRCUMFERENCE * (1 - secondsLeft / TOTAL_5H)
+  const { text } = colorForRemaining(pctRemaining)
 
   return (
     <section className="flex flex-col items-center justify-center py-10 bg-surface-container-lowest rounded-xl border border-surface-container shadow-sm">
@@ -23,7 +27,7 @@ export default function HeroCountdown({ secondsLeft, totalDuration }: Props) {
             fill="transparent" stroke="currentColor" strokeWidth="2"
           />
           <circle
-            className="text-accent-terracotta progress-ring__circle"
+            className={`${text} progress-ring__circle`}
             cx="128" cy="128" r={RADIUS}
             fill="transparent" stroke="currentColor"
             strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}

@@ -5,11 +5,10 @@ import EditFormActions from '../ui/EditFormActions'
 
 type Props = {
   secondsLeft: number
-  totalDuration: number
   onSet: (totalSeconds: number) => void
 }
 
-export default function FiveHourCard({ secondsLeft, totalDuration, onSet }: Props) {
+export default function FiveHourCard({ secondsLeft, onSet }: Props) {
   const [editing, setEditing] = useState(false)
   const [editHour, setEditHour] = useState(0)
   const [editMinute, setEditMinute] = useState(0)
@@ -19,8 +18,7 @@ export default function FiveHourCard({ secondsLeft, totalDuration, onSet }: Prop
   const secs = secondsLeft % 60
   const hhmm = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
   const ss = String(secs).padStart(2, '0')
-  const pctRemaining = Math.round((secondsLeft / totalDuration) * 100)
-  const pctElapsed = 100 - pctRemaining
+  const pctRemaining = Math.min(100, Math.round((secondsLeft / TOTAL_5H) * 100))
 
   function openEdit() {
     setEditHour(hours)
@@ -60,7 +58,7 @@ export default function FiveHourCard({ secondsLeft, totalDuration, onSet }: Prop
             <span className="font-display-lg text-lg text-ink-primary/40">:{ss}</span>
           </div>
           <span className="font-label-sm text-xs text-ink-secondary mt-0.5 block">until reset</span>
-          <ProgressBar elapsedPct={pctElapsed} remainingPct={pctRemaining} />
+          <ProgressBar remainingPct={pctRemaining} />
         </div>
       </div>
 

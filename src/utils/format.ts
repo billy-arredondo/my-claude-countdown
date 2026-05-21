@@ -1,5 +1,11 @@
 export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+export function colorForRemaining(pct: number): { bar: string; text: string } {
+  if (pct <= 10) return { bar: 'bg-error', text: 'text-error' }
+  if (pct <= 25) return { bar: 'bg-accent-amber', text: 'text-accent-amber' }
+  return { bar: 'bg-accent-terracotta', text: 'text-accent-terracotta' }
+}
+
 export function formatWeeklyTime(seconds: number): string {
   const days = Math.floor(seconds / 86400)
   const hrs = Math.floor((seconds % 86400) / 3600)

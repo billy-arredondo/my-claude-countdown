@@ -1,24 +1,23 @@
 import { useState } from 'react'
 import { formatWeeklyTime, formatResetLabel } from '../../utils/format'
+import { TOTAL_1W } from '../../stores/countdownStore'
 import ProgressBar from '../ui/ProgressBar'
 import EditFormActions from '../ui/EditFormActions'
 import DayPicker from '../ui/DayPicker'
 
 type Props = {
   secondsLeft: number
-  totalDuration: number
   resetAt: number
   onSet: (dayOfWeek: number, hour: number, minute: number) => void
 }
 
-export default function WeeklyCard({ secondsLeft, totalDuration, resetAt, onSet }: Props) {
+export default function WeeklyCard({ secondsLeft, resetAt, onSet }: Props) {
   const [editing, setEditing] = useState(false)
   const [editDay, setEditDay] = useState(0)
   const [editHour, setEditHour] = useState(0)
   const [editMinute, setEditMinute] = useState(0)
 
-  const elapsedPct = Math.min(100, Math.round(((totalDuration - secondsLeft) / totalDuration) * 100))
-  const remainingPct = 100 - elapsedPct
+  const remainingPct = Math.min(100, Math.round((secondsLeft / TOTAL_1W) * 100))
   const isLive = secondsLeft < 3600 && secondsLeft > 0
 
   function openEdit() {
@@ -58,7 +57,7 @@ export default function WeeklyCard({ secondsLeft, totalDuration, resetAt, onSet 
             {formatWeeklyTime(secondsLeft)}
           </span>
           <span className="font-label-sm text-xs text-ink-secondary mt-0.5 block">until reset</span>
-          <ProgressBar elapsedPct={elapsedPct} remainingPct={remainingPct} />
+          <ProgressBar remainingPct={remainingPct} />
         </div>
       </div>
 
