@@ -3,7 +3,6 @@ import type { Page } from '../types'
 
 const NAV_ITEMS: { page: Page; label: string; icon: string }[] = [
   { page: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { page: 'history',   label: 'History',   icon: 'history'   },
   { page: 'settings',  label: 'Settings',  icon: 'settings'  },
 ]
 

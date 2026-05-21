@@ -5,14 +5,18 @@ import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import { useApplyTheme } from './stores/themeStore'
 
+const PAGES: Record<Page, React.ReactElement> = {
+  dashboard: <Dashboard />,
+  settings:  <Settings />,
+}
+
 export default function App() {
   useApplyTheme()
   const [page, setPage] = useState<Page>('dashboard')
 
   return (
     <Layout current={page} onNavigate={setPage}>
-      {page === 'dashboard' && <Dashboard />}
-      {page === 'settings' && <Settings />}
+      {PAGES[page]}
     </Layout>
   )
 }
