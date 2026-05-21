@@ -1,123 +1,398 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-const TOTAL_DURATION = 5 * 60 * 60
+const TOTAL_5H = 5 * 60 * 60
+const TOTAL_1W = 7 * 24 * 60 * 60
 const RADIUS = 122
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function initWeeklyState() {
+  const now = new Date()
+  const daysUntilSunday = (7 - now.getDay()) % 7 || 7
+  const nextSunday = new Date(now)
+  nextSunday.setDate(now.getDate() + daysUntilSunday)
+  nextSunday.setHours(0, 0, 0, 0)
+  const resetAt = nextSunday.getTime()
+  return { resetAt, setAt: resetAt - TOTAL_1W * 1000 }
+}
+
+const INITIAL_WEEKLY = initWeeklyState()
+
+function computeWeeklyReset(dayOfWeek: number, hour: number, minute: number): number {
+  const now = new Date()
+  let daysUntil = (dayOfWeek - now.getDay() + 7) % 7
+  const todayCandidate = new Date(now)
+  todayCandidate.setHours(hour, minute, 0, 0)
+  if (daysUntil === 0 && todayCandidate.getTime() <= now.getTime()) daysUntil = 7
+  const target = new Date(now)
+  target.setDate(now.getDate() + daysUntil)
+  target.setHours(hour, minute, 0, 0)
+  return target.getTime()
+}
+
+function formatWeeklyTime(seconds: number): string {
+  const days = Math.floor(seconds / 86400)
+  const hrs = Math.floor((seconds % 86400) / 3600)
+  const mins = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  if (seconds >= 2 * 86400) return `${days}d ${String(hrs).padStart(2, '0')}h`
+  if (seconds >= 3600) {
+    if (days > 0) return `${days}d ${String(hrs).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m`
+    return `${String(hrs).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m`
+  }
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
+
+function parse5hInput(raw: string): number | null {
+  const match = raw.trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return null
+  const h = parseInt(match[1], 10)
+  const m = parseInt(match[2], 10)
+  if (m > 59) return null
+  const total = h * 3600 + m * 60
+  if (total <= 0 || total > TOTAL_5H) return null
+  return total
+}
+
+function formatResetLabel(resetAt: number): string {
+  const d = new Date(resetAt)
+  const hour = d.getHours()
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const h = hour % 12 || 12
+  return `${DAY_NAMES[d.getDay()]} ${h}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`
+}
 
 export default function Dashboard() {
-  const [totalSeconds, setTotalSeconds] = useState(TOTAL_DURATION)
+  // cd-5h
+  const [totalSeconds, setTotalSeconds] = useState(TOTAL_5H)
+  const [editing5h, setEditing5h] = useState(false)
+  const [input5h, setInput5h] = useState('')
+  const [error5h, setError5h] = useState<string | null>(null)
+  const [toast5h, setToast5h] = useState(false)
+  const inputRef5h = useRef<HTMLInputElement>(null)
+
+  // cd-1w
+  const [weeklyResetAt, setWeeklyResetAt] = useState(INITIAL_WEEKLY.resetAt)
+  const [weeklySetAt, setWeeklySetAt] = useState(INITIAL_WEEKLY.setAt)
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  const [editingWeekly, setEditingWeekly] = useState(false)
+  const [editDay, setEditDay] = useState(0)
+  const [editHour, setEditHour] = useState(0)
+  const [editMinute, setEditMinute] = useState(0)
+  const [toastWeekly, setToastWeekly] = useState(false)
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const id = setInterval(() => {
       setTotalSeconds(s => (s > 0 ? s - 1 : 0))
+      setNowMs(Date.now())
     }, 1000)
-    return () => clearInterval(interval)
+    return () => clearInterval(id)
   }, [])
 
+  useEffect(() => {
+    if (editing5h) inputRef5h.current?.focus()
+  }, [editing5h])
+
+  function showToast(setter: (v: boolean) => void) {
+    setter(true)
+    setTimeout(() => setter(false), 2200)
+  }
+
+  // cd-5h derived
   const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-  const ss = String(seconds).padStart(2, '0')
-  const dashOffset = CIRCUMFERENCE * (1 - totalSeconds / TOTAL_DURATION)
+  const mins = Math.floor((totalSeconds % 3600) / 60)
+  const secs = totalSeconds % 60
+  const hhmm = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
+  const ss = String(secs).padStart(2, '0')
+  const dashOffset = CIRCUMFERENCE * (1 - totalSeconds / TOTAL_5H)
+  const pct5hRemaining = Math.round((totalSeconds / TOTAL_5H) * 100)
+  const pct5hElapsed = 100 - pct5hRemaining
+  const expired5h = totalSeconds === 0
+
+  // cd-1w derived
+  const weeklySecsLeft = Math.max(0, Math.floor((weeklyResetAt - nowMs) / 1000))
+  const weeklyTotalDuration = Math.max(1, Math.floor((weeklyResetAt - weeklySetAt) / 1000))
+  const weeklyElapsedPct = Math.min(100, Math.round(((weeklyTotalDuration - weeklySecsLeft) / weeklyTotalDuration) * 100))
+  const weeklyRemainingPct = 100 - weeklyElapsedPct
+  const weeklyFormatted = formatWeeklyTime(weeklySecsLeft)
+  const isWeeklyLive = weeklySecsLeft < 3600 && weeklySecsLeft > 0
+
+  function open5hEdit() {
+    setInput5h(hhmm)
+    setError5h(null)
+    setEditing5h(true)
+  }
+
+  function close5hEdit() {
+    setEditing5h(false)
+    setError5h(null)
+  }
+
+  function save5h() {
+    const parsed = parse5hInput(input5h)
+    if (parsed === null) {
+      setError5h('Enter a valid time between 0:01 and 5:00')
+      return
+    }
+    setTotalSeconds(parsed)
+    close5hEdit()
+    showToast(setToast5h)
+  }
+
+  function openWeeklyEdit() {
+    const d = new Date(weeklyResetAt)
+    setEditDay(d.getDay())
+    setEditHour(d.getHours())
+    setEditMinute(d.getMinutes())
+    setEditingWeekly(true)
+  }
+
+  function saveWeekly() {
+    const newResetAt = computeWeeklyReset(editDay, editHour, editMinute)
+    setWeeklyResetAt(newResetAt)
+    setWeeklySetAt(Date.now())
+    setEditingWeekly(false)
+    showToast(setToastWeekly)
+  }
 
   return (
     <main className="px-margin-mobile max-w-2xl mx-auto space-y-gutter py-6 lg:py-8">
-      {/* Countdown */}
-      <section className="flex flex-col items-center justify-center py-10 bg-surface-container-lowest rounded-xl border border-surface-container shadow-sm">
+
+      {/* Hero — 5h countdown */}
+      <section className="relative flex flex-col items-center justify-center py-10 bg-surface-container-lowest rounded-xl border border-surface-container shadow-sm overflow-hidden">
+
+        {/* 5h save toast */}
+        <div className={`absolute top-3 right-3 flex items-center gap-1.5 bg-ink-primary text-white px-3 py-1.5 rounded-full text-xs font-label-sm transition-all duration-300 ${toast5h ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'}`}>
+          <span className="material-symbols-outlined text-[13px]">check</span>
+          Timer set
+        </div>
+
         <span className="font-label-sm text-ink-secondary mb-8 uppercase tracking-widest">Next Reset In</span>
+
         <div className="relative flex items-center justify-center w-64 h-64">
           <svg className="w-full h-full" aria-hidden="true">
             <circle
               className="text-surface-container"
-              cx="128" cy="128"
-              r={RADIUS}
-              fill="transparent"
-              stroke="currentColor"
-              strokeWidth="2"
+              cx="128" cy="128" r={RADIUS}
+              fill="transparent" stroke="currentColor" strokeWidth="2"
             />
             <circle
-              className="text-accent-terracotta progress-ring__circle"
-              cx="128" cy="128"
-              r={RADIUS}
-              fill="transparent"
-              stroke="currentColor"
+              className={`progress-ring__circle ${expired5h ? 'text-surface-container-high' : 'text-accent-terracotta'}`}
+              cx="128" cy="128" r={RADIUS}
+              fill="transparent" stroke="currentColor"
               strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
               strokeDashoffset={dashOffset}
-              strokeLinecap="round"
-              strokeWidth="2.5"
+              strokeLinecap="round" strokeWidth="2.5"
             />
           </svg>
-          <div className="absolute flex flex-col items-center">
+          <div className="absolute flex flex-col items-center gap-0.5">
             <div className="flex items-baseline gap-0.5 tabular-nums">
-              <span className="text-4xl font-medium tracking-tight text-ink-primary">{hhmm}</span>
+              <span className={`text-4xl font-medium tracking-tight ${expired5h ? 'text-ink-secondary' : 'text-ink-primary'}`}>
+                {hhmm}
+              </span>
               <span className="text-2xl font-normal tracking-tight text-ink-primary/40">:{ss}</span>
             </div>
-            <span className="font-label-md text-ink-secondary mt-1">remaining</span>
+            <span className="font-label-sm text-xs text-ink-secondary">
+              {expired5h ? 'expired' : 'remaining'}
+            </span>
+            <span className={`font-label-sm text-xs tabular-nums mt-0.5 ${expired5h ? 'text-error' : 'text-ink-secondary/50'}`}>
+              {pct5hRemaining}%
+            </span>
           </div>
         </div>
-        <button
-          onClick={() => setTotalSeconds(TOTAL_DURATION)}
-          className="mt-10 bg-accent-terracotta text-white px-8 py-3.5 rounded-full font-label-md font-semibold hover:brightness-105 active:scale-[0.98] transition-all flex items-center gap-2 shadow-sm shadow-accent-terracotta/20"
-        >
-          <span className="material-symbols-outlined text-[20px]">play_circle</span>
-          Start/Update Tracker
-        </button>
+
+        {editing5h ? (
+          <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-xs px-4">
+            <label className="font-label-sm text-xs text-ink-secondary text-center">
+              Set remaining time · max 5:00
+            </label>
+            <input
+              ref={inputRef5h}
+              type="text"
+              inputMode="numeric"
+              value={input5h}
+              onChange={e => { setInput5h(e.target.value); setError5h(null) }}
+              onKeyDown={e => { if (e.key === 'Enter') save5h(); if (e.key === 'Escape') close5hEdit() }}
+              placeholder="H:MM"
+              className={`w-full text-center text-2xl font-medium tabular-nums font-code-snippet bg-surface-container rounded-xl px-4 py-3 border outline-none transition-colors ${
+                error5h
+                  ? 'border-error text-error'
+                  : 'border-surface-container-high focus:border-accent-terracotta text-ink-primary'
+              }`}
+            />
+            {error5h && (
+              <p className="font-label-sm text-xs text-error text-center -mt-1">{error5h}</p>
+            )}
+            <div className="flex gap-2 w-full">
+              <button
+                onClick={close5hEdit}
+                className="flex-1 py-2.5 rounded-full font-label-md text-sm border border-surface-container text-ink-secondary hover:text-ink-primary hover:border-surface-container-high transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={save5h}
+                className="flex-1 py-2.5 rounded-full font-label-md text-sm bg-accent-terracotta text-white hover:brightness-105 active:scale-[0.98] transition-all"
+              >
+                Set Timer
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-10 flex items-center gap-3">
+            <button
+              onClick={() => setTotalSeconds(TOTAL_5H)}
+              className="bg-accent-terracotta text-white px-8 py-3.5 rounded-full font-label-md font-semibold hover:brightness-105 active:scale-[0.98] transition-all flex items-center gap-2 shadow-sm shadow-accent-terracotta/20"
+            >
+              <span className="material-symbols-outlined text-[20px]">play_circle</span>
+              Reset to 5h
+            </button>
+            <button
+              onClick={open5hEdit}
+              aria-label="Set custom remaining time"
+              className="w-11 h-11 flex items-center justify-center rounded-full border border-surface-container bg-surface-container-lowest text-ink-secondary hover:text-accent-terracotta hover:border-accent-terracotta/30 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">edit</span>
+            </button>
+          </div>
+        )}
       </section>
 
-      {/* Stats cards */}
+      {/* Stat cards */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-        {/* 5-Hour Window */}
+
+        {/* 5h card */}
         <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container shadow-sm flex flex-col justify-between min-h-35">
           <div className="flex justify-between items-start">
-            <div className="flex flex-col">
+            <div>
               <span className="font-headline-md text-lg text-ink-primary">5-Hour Window</span>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="material-symbols-outlined text-[14px] text-ink-secondary">schedule</span>
                 <span className="font-label-sm text-ink-secondary">Rolling period</span>
               </div>
             </div>
-            <span className="bg-surface-container-highest text-ink-primary font-label-sm px-2.5 py-0.5 rounded-full">ACTIVE</span>
+            <span className={`font-label-sm px-2.5 py-0.5 rounded-full text-xs ${expired5h ? 'bg-error-container text-on-error-container' : 'bg-surface-container-highest text-ink-primary'}`}>
+              {expired5h ? 'EXPIRED' : 'ACTIVE'}
+            </span>
           </div>
           <div className="mt-6">
-            <div className="flex items-baseline gap-1">
-              <span className="font-display-lg text-2xl text-ink-primary">42</span>
-              <button className="ml-2 hover:text-accent-terracotta transition-colors flex items-center">
-                <span className="material-symbols-outlined text-[16px] text-outline">edit</span>
-              </button>
-              <span className="font-body-md text-ink-secondary">/ 50 messages</span>
+            <div className="flex items-baseline gap-0.5 tabular-nums">
+              <span className={`font-display-lg text-2xl ${expired5h ? 'text-ink-secondary' : 'text-ink-primary'}`}>{hhmm}</span>
+              <span className="font-display-lg text-lg text-ink-primary/40">:{ss}</span>
             </div>
-            <div className="w-full h-1.5 bg-surface-container rounded-full mt-3 overflow-hidden">
-              <div className="h-full bg-accent-terracotta rounded-full w-[84%]" />
+            <span className="font-label-sm text-xs text-ink-secondary mt-0.5 block">until reset</span>
+            <div className="flex items-center gap-2 mt-3">
+              <div className="flex-1 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${expired5h ? 'bg-error-container' : 'bg-accent-terracotta'}`}
+                  style={{ width: `${pct5hElapsed}%` }}
+                />
+              </div>
+              <span className="font-label-sm text-xs text-ink-secondary tabular-nums w-9 text-right shrink-0">
+                {pct5hRemaining}%
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Weekly Reset */}
-        <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container shadow-sm flex flex-col justify-between min-h-35">
-          <div className="flex justify-between items-start">
-            <div className="flex flex-col">
-              <span className="font-headline-md text-lg text-ink-primary">Weekly Reset</span>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="material-symbols-outlined text-[14px] text-ink-secondary">calendar_today</span>
-                <span className="font-label-sm text-ink-secondary">Sunday 12:00 AM</span>
-              </div>
+        {/* Weekly card */}
+        <div className="rounded-xl bg-surface-container-low border border-surface-container shadow-sm overflow-hidden">
+
+          {/* Weekly save toast */}
+          {toastWeekly && (
+            <div className="mx-5 mt-4 flex items-center gap-1.5 bg-surface-container text-ink-primary px-3 py-2 rounded-lg text-xs font-label-sm">
+              <span className="material-symbols-outlined text-[14px] text-accent-terracotta">check_circle</span>
+              Reset time updated
             </div>
-            <button className="hover:text-accent-terracotta transition-colors">
-              <span className="material-symbols-outlined text-[18px] text-outline">edit</span>
-            </button>
-          </div>
-          <div className="mt-6">
-            <div className="flex items-center gap-2">
-              <div className="flex items-baseline gap-1">
-                <span className="font-display-lg text-2xl text-ink-primary">4</span>
-                <span className="font-body-md text-ink-secondary">Days left</span>
+          )}
+
+          <div className="p-6 flex flex-col justify-between min-h-35">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="font-headline-md text-lg text-ink-primary">Weekly Reset</span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="material-symbols-outlined text-[14px] text-ink-secondary">calendar_today</span>
+                  <span className="font-label-sm text-ink-secondary">{formatResetLabel(weeklyResetAt)}</span>
+                </div>
               </div>
-              <button className="hover:text-accent-terracotta transition-colors">
-                <span className="material-symbols-outlined text-[16px] text-outline">edit</span>
+              <button
+                onClick={openWeeklyEdit}
+                aria-label="Edit weekly reset time"
+                className={`transition-colors ${editingWeekly ? 'text-accent-terracotta' : 'text-outline hover:text-accent-terracotta'}`}
+              >
+                <span className="material-symbols-outlined text-[18px]">edit</span>
               </button>
             </div>
+            <div className="mt-6">
+              <span className={`font-display-lg text-2xl tabular-nums ${isWeeklyLive ? 'text-accent-terracotta' : 'text-ink-primary'}`}>
+                {weeklyFormatted}
+              </span>
+              <span className="font-label-sm text-xs text-ink-secondary mt-0.5 block">until reset</span>
+              <div className="flex items-center gap-2 mt-3">
+                <div className="flex-1 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent-terracotta rounded-full transition-all duration-1000"
+                    style={{ width: `${weeklyElapsedPct}%` }}
+                  />
+                </div>
+                <span className="font-label-sm text-xs text-ink-secondary tabular-nums w-9 text-right shrink-0">
+                  {weeklyRemainingPct}%
+                </span>
+              </div>
+            </div>
           </div>
+
+          {/* Weekly edit panel */}
+          {editingWeekly && (
+            <div className="border-t border-surface-container px-6 pt-4 pb-6 bg-surface-container-lowest space-y-3">
+              <p className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest">
+                Next automatic reset
+              </p>
+
+              {/* Day selector */}
+              <div className="flex gap-1">
+                {DAY_NAMES.map((day, i) => (
+                  <button
+                    key={day}
+                    onClick={() => setEditDay(i)}
+                    className={`flex-1 py-1.5 rounded-md font-label-sm text-xs transition-all ${
+                      editDay === i
+                        ? 'bg-accent-terracotta text-white font-semibold'
+                        : 'bg-surface-container text-ink-secondary hover:text-ink-primary hover:bg-surface-container-high'
+                    }`}
+                  >
+                    {day.slice(0, 2)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Time input */}
+              <input
+                type="time"
+                value={`${String(editHour).padStart(2, '0')}:${String(editMinute).padStart(2, '0')}`}
+                onChange={e => {
+                  const [h, m] = e.target.value.split(':').map(Number)
+                  if (!isNaN(h) && !isNaN(m)) { setEditHour(h); setEditMinute(m) }
+                }}
+                className="w-full bg-surface-container border border-surface-container-high rounded-lg px-3 py-2.5 font-code-snippet text-sm text-ink-primary outline-none focus:border-accent-terracotta transition-colors"
+              />
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setEditingWeekly(false)}
+                  className="flex-1 py-2.5 rounded-full font-label-md text-sm border border-surface-container text-ink-secondary hover:text-ink-primary hover:border-surface-container-high transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveWeekly}
+                  className="flex-1 py-2.5 rounded-full font-label-md text-sm bg-accent-terracotta text-white hover:brightness-105 active:scale-[0.98] transition-all"
+                >
+                  Set Reset
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
