@@ -83,7 +83,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setTotalSeconds(s => (s > 0 ? s - 1 : 0))
+      setTotalSeconds(s => (s > 1 ? s - 1 : TOTAL_5H))
       setNowMs(Date.now())
     }, 1000)
     return () => clearInterval(id)
@@ -107,7 +107,6 @@ export default function Dashboard() {
   const dashOffset = CIRCUMFERENCE * (1 - totalSeconds / TOTAL_5H)
   const pct5hRemaining = Math.round((totalSeconds / TOTAL_5H) * 100)
   const pct5hElapsed = 100 - pct5hRemaining
-  const expired5h = totalSeconds === 0
 
   // cd-1w derived
   const weeklySecsLeft = Math.max(0, Math.floor((weeklyResetAt - nowMs) / 1000))
@@ -158,15 +157,8 @@ export default function Dashboard() {
   return (
     <main className="px-margin-mobile max-w-2xl mx-auto space-y-gutter py-6 lg:py-8">
 
-      {/* Hero — 5h countdown */}
-      <section className="relative flex flex-col items-center justify-center py-10 bg-surface-container-lowest rounded-xl border border-surface-container shadow-sm overflow-hidden">
-
-        {/* 5h save toast */}
-        <div className={`absolute top-3 right-3 flex items-center gap-1.5 bg-ink-primary text-white px-3 py-1.5 rounded-full text-xs font-label-sm transition-all duration-300 ${toast5h ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'}`}>
-          <span className="material-symbols-outlined text-[13px]">check</span>
-          Timer set
-        </div>
-
+      {/* Hero — 5h countdown (display only) */}
+      <section className="flex flex-col items-center justify-center py-10 bg-surface-container-lowest rounded-xl border border-surface-container shadow-sm">
         <span className="font-label-sm text-ink-secondary mb-8 uppercase tracking-widest">Next Reset In</span>
 
         <div className="relative flex items-center justify-center w-64 h-64">
@@ -177,7 +169,7 @@ export default function Dashboard() {
               fill="transparent" stroke="currentColor" strokeWidth="2"
             />
             <circle
-              className={`progress-ring__circle ${expired5h ? 'text-surface-container-high' : 'text-accent-terracotta'}`}
+              className="text-accent-terracotta progress-ring__circle"
               cx="128" cy="128" r={RADIUS}
               fill="transparent" stroke="currentColor"
               strokeDasharray={`${CIRCUMFERENCE} ${CIRCUMFERENCE}`}
@@ -187,118 +179,108 @@ export default function Dashboard() {
           </svg>
           <div className="absolute flex flex-col items-center gap-0.5">
             <div className="flex items-baseline gap-0.5 tabular-nums">
-              <span className={`text-4xl font-medium tracking-tight ${expired5h ? 'text-ink-secondary' : 'text-ink-primary'}`}>
-                {hhmm}
-              </span>
+              <span className="text-4xl font-medium tracking-tight text-ink-primary">{hhmm}</span>
               <span className="text-2xl font-normal tracking-tight text-ink-primary/40">:{ss}</span>
             </div>
-            <span className="font-label-sm text-xs text-ink-secondary">
-              {expired5h ? 'expired' : 'remaining'}
-            </span>
-            <span className={`font-label-sm text-xs tabular-nums mt-0.5 ${expired5h ? 'text-error' : 'text-ink-secondary/50'}`}>
+            <span className="font-label-sm text-xs text-ink-secondary">remaining</span>
+            <span className="font-label-sm text-xs tabular-nums mt-0.5 text-ink-secondary/50">
               {pct5hRemaining}%
             </span>
           </div>
         </div>
-
-        {editing5h ? (
-          <div className="mt-6 flex flex-col items-center gap-3 w-full max-w-xs px-4">
-            <label className="font-label-sm text-xs text-ink-secondary text-center">
-              Set remaining time · max 5:00
-            </label>
-            <input
-              ref={inputRef5h}
-              type="text"
-              inputMode="numeric"
-              value={input5h}
-              onChange={e => { setInput5h(e.target.value); setError5h(null) }}
-              onKeyDown={e => { if (e.key === 'Enter') save5h(); if (e.key === 'Escape') close5hEdit() }}
-              placeholder="H:MM"
-              className={`w-full text-center text-2xl font-medium tabular-nums font-code-snippet bg-surface-container rounded-xl px-4 py-3 border outline-none transition-colors ${
-                error5h
-                  ? 'border-error text-error'
-                  : 'border-surface-container-high focus:border-accent-terracotta text-ink-primary'
-              }`}
-            />
-            {error5h && (
-              <p className="font-label-sm text-xs text-error text-center -mt-1">{error5h}</p>
-            )}
-            <div className="flex gap-2 w-full">
-              <button
-                onClick={close5hEdit}
-                className="flex-1 py-2.5 rounded-full font-label-md text-sm border border-surface-container text-ink-secondary hover:text-ink-primary hover:border-surface-container-high transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={save5h}
-                className="flex-1 py-2.5 rounded-full font-label-md text-sm bg-accent-terracotta text-white hover:brightness-105 active:scale-[0.98] transition-all"
-              >
-                Set Timer
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-10 flex items-center gap-3">
-            <button
-              onClick={() => setTotalSeconds(TOTAL_5H)}
-              className="bg-accent-terracotta text-white px-8 py-3.5 rounded-full font-label-md font-semibold hover:brightness-105 active:scale-[0.98] transition-all flex items-center gap-2 shadow-sm shadow-accent-terracotta/20"
-            >
-              <span className="material-symbols-outlined text-[20px]">play_circle</span>
-              Reset to 5h
-            </button>
-            <button
-              onClick={open5hEdit}
-              aria-label="Set custom remaining time"
-              className="w-11 h-11 flex items-center justify-center rounded-full border border-surface-container bg-surface-container-lowest text-ink-secondary hover:text-accent-terracotta hover:border-accent-terracotta/30 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">edit</span>
-            </button>
-          </div>
-        )}
       </section>
 
       {/* Stat cards */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
 
         {/* 5h card */}
-        <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container shadow-sm flex flex-col justify-between min-h-35">
-          <div className="flex justify-between items-start">
-            <div>
-              <span className="font-headline-md text-lg text-ink-primary">5-Hour Window</span>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="material-symbols-outlined text-[14px] text-ink-secondary">schedule</span>
-                <span className="font-label-sm text-ink-secondary">Rolling period</span>
+        <div className="rounded-xl bg-surface-container-low border border-surface-container shadow-sm overflow-hidden">
+
+          {toast5h && (
+            <div className="mx-5 mt-4 flex items-center gap-1.5 bg-surface-container text-ink-primary px-3 py-2 rounded-lg text-xs font-label-sm">
+              <span className="material-symbols-outlined text-[14px] text-accent-terracotta">check_circle</span>
+              Timer set
+            </div>
+          )}
+
+          <div className="p-6 flex flex-col justify-between min-h-35">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="font-headline-md text-lg text-ink-primary">5-Hour Window</span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="material-symbols-outlined text-[14px] text-ink-secondary">schedule</span>
+                  <span className="font-label-sm text-ink-secondary">Rolling period</span>
+                </div>
+              </div>
+              <button
+                onClick={open5hEdit}
+                aria-label="Set custom remaining time"
+                className={`transition-colors ${editing5h ? 'text-accent-terracotta' : 'text-outline hover:text-accent-terracotta'}`}
+              >
+                <span className="material-symbols-outlined text-[18px]">edit</span>
+              </button>
+            </div>
+            <div className="mt-6">
+              <div className="flex items-baseline gap-0.5 tabular-nums">
+                <span className="font-display-lg text-2xl text-ink-primary">{hhmm}</span>
+                <span className="font-display-lg text-lg text-ink-primary/40">:{ss}</span>
+              </div>
+              <span className="font-label-sm text-xs text-ink-secondary mt-0.5 block">until reset</span>
+              <div className="flex items-center gap-2 mt-3">
+                <div className="flex-1 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-accent-terracotta rounded-full transition-all duration-1000"
+                    style={{ width: `${pct5hElapsed}%` }}
+                  />
+                </div>
+                <span className="font-label-sm text-xs text-ink-secondary tabular-nums w-9 text-right shrink-0">
+                  {pct5hRemaining}%
+                </span>
               </div>
             </div>
-            <span className={`font-label-sm px-2.5 py-0.5 rounded-full text-xs ${expired5h ? 'bg-error-container text-on-error-container' : 'bg-surface-container-highest text-ink-primary'}`}>
-              {expired5h ? 'EXPIRED' : 'ACTIVE'}
-            </span>
           </div>
-          <div className="mt-6">
-            <div className="flex items-baseline gap-0.5 tabular-nums">
-              <span className={`font-display-lg text-2xl ${expired5h ? 'text-ink-secondary' : 'text-ink-primary'}`}>{hhmm}</span>
-              <span className="font-display-lg text-lg text-ink-primary/40">:{ss}</span>
-            </div>
-            <span className="font-label-sm text-xs text-ink-secondary mt-0.5 block">until reset</span>
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex-1 h-1.5 bg-surface-container rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ${expired5h ? 'bg-error-container' : 'bg-accent-terracotta'}`}
-                  style={{ width: `${pct5hElapsed}%` }}
-                />
+
+          {editing5h && (
+            <div className="border-t border-surface-container px-6 pt-4 pb-6 bg-surface-container-lowest space-y-3">
+              <p className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest">
+                Set remaining time · max 5:00
+              </p>
+              <input
+                ref={inputRef5h}
+                type="text"
+                inputMode="numeric"
+                value={input5h}
+                onChange={e => { setInput5h(e.target.value); setError5h(null) }}
+                onKeyDown={e => { if (e.key === 'Enter') save5h(); if (e.key === 'Escape') close5hEdit() }}
+                placeholder="H:MM"
+                className={`w-full text-center text-2xl font-medium tabular-nums font-code-snippet bg-surface-container rounded-lg px-3 py-2.5 border outline-none transition-colors ${
+                  error5h
+                    ? 'border-error text-error'
+                    : 'border-surface-container-high focus:border-accent-terracotta text-ink-primary'
+                }`}
+              />
+              {error5h && <p className="font-label-sm text-xs text-error">{error5h}</p>}
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={close5hEdit}
+                  className="flex-1 py-2.5 rounded-full font-label-md text-sm border border-surface-container text-ink-secondary hover:text-ink-primary hover:border-surface-container-high transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={save5h}
+                  className="flex-1 py-2.5 rounded-full font-label-md text-sm bg-accent-terracotta text-white hover:brightness-105 active:scale-[0.98] transition-all"
+                >
+                  Set Timer
+                </button>
               </div>
-              <span className="font-label-sm text-xs text-ink-secondary tabular-nums w-9 text-right shrink-0">
-                {pct5hRemaining}%
-              </span>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Weekly card */}
         <div className="rounded-xl bg-surface-container-low border border-surface-container shadow-sm overflow-hidden">
 
-          {/* Weekly save toast */}
           {toastWeekly && (
             <div className="mx-5 mt-4 flex items-center gap-1.5 bg-surface-container text-ink-primary px-3 py-2 rounded-lg text-xs font-label-sm">
               <span className="material-symbols-outlined text-[14px] text-accent-terracotta">check_circle</span>
@@ -342,14 +324,12 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Weekly edit panel */}
           {editingWeekly && (
             <div className="border-t border-surface-container px-6 pt-4 pb-6 bg-surface-container-lowest space-y-3">
               <p className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest">
                 Next automatic reset
               </p>
 
-              {/* Day selector */}
               <div className="flex gap-1">
                 {DAY_NAMES.map((day, i) => (
                   <button
@@ -366,7 +346,6 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* Time input */}
               <input
                 type="time"
                 value={`${String(editHour).padStart(2, '0')}:${String(editMinute).padStart(2, '0')}`}
