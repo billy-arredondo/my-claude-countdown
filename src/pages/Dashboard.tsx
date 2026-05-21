@@ -1,34 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
+import { useCountdownStore, computeWeeklyReset, TOTAL_5H } from '../stores/countdownStore'
 
-const TOTAL_5H = 5 * 60 * 60
-const TOTAL_1W = 7 * 24 * 60 * 60
 const RADIUS = 122
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-function initWeeklyState() {
-  const now = new Date()
-  const daysUntilSunday = (7 - now.getDay()) % 7 || 7
-  const nextSunday = new Date(now)
-  nextSunday.setDate(now.getDate() + daysUntilSunday)
-  nextSunday.setHours(0, 0, 0, 0)
-  const resetAt = nextSunday.getTime()
-  return { resetAt, setAt: resetAt - TOTAL_1W * 1000 }
-}
-
-const INITIAL_WEEKLY = initWeeklyState()
-
-function computeWeeklyReset(dayOfWeek: number, hour: number, minute: number): number {
-  const now = new Date()
-  let daysUntil = (dayOfWeek - now.getDay() + 7) % 7
-  const todayCandidate = new Date(now)
-  todayCandidate.setHours(hour, minute, 0, 0)
-  if (daysUntil === 0 && todayCandidate.getTime() <= now.getTime()) daysUntil = 7
-  const target = new Date(now)
-  target.setDate(now.getDate() + daysUntil)
-  target.setHours(hour, minute, 0, 0)
-  return target.getTime()
-}
 
 function formatWeeklyTime(seconds: number): string {
   const days = Math.floor(seconds / 86400)
@@ -43,17 +18,6 @@ function formatWeeklyTime(seconds: number): string {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
-function parse5hInput(raw: string): number | null {
-  const match = raw.trim().match(/^(\d{1,2}):(\d{2})$/)
-  if (!match) return null
-  const h = parseInt(match[1], 10)
-  const m = parseInt(match[2], 10)
-  if (m > 59) return null
-  const total = h * 3600 + m * 60
-  if (total <= 0 || total > TOTAL_5H) return null
-  return total
-}
-
 function formatResetLabel(resetAt: number): string {
   const d = new Date(resetAt)
   const hour = d.getHours()
@@ -63,50 +27,55 @@ function formatResetLabel(resetAt: number): string {
 }
 
 export default function Dashboard() {
-  // cd-5h
-  const [totalSeconds, setTotalSeconds] = useState(TOTAL_5H)
-  const [editing5h, setEditing5h] = useState(false)
-  const [input5h, setInput5h] = useState('')
-  const [error5h, setError5h] = useState<string | null>(null)
-  const [toast5h, setToast5h] = useState(false)
-  const inputRef5h = useRef<HTMLInputElement>(null)
+  // countdown store (persisted)
+  const fiveHourResetAt = useCountdownStore(s => s.fiveHourResetAt)
+  const fiveHourSetAt   = useCountdownStore(s => s.fiveHourSetAt)
+  const weeklyResetAt   = useCountdownStore(s => s.weeklyResetAt)
+  const weeklySetAt     = useCountdownStore(s => s.weeklySetAt)
+  const setFiveHour     = useCountdownStore(s => s.setFiveHour)
+  const setWeekly       = useCountdownStore(s => s.setWeekly)
+  const tick            = useCountdownStore(s => s.tick)
 
-  // cd-1w
-  const [weeklyResetAt, setWeeklyResetAt] = useState(INITIAL_WEEKLY.resetAt)
-  const [weeklySetAt, setWeeklySetAt] = useState(INITIAL_WEEKLY.setAt)
+  // cd-5h (UI only)
+  const [editing5h, setEditing5h] = useState(false)
+  const [editHour5h, setEditHour5h] = useState(0)
+  const [editMinute5h, setEditMinute5h] = useState(0)
+  // cd-1w (UI only)
   const [nowMs, setNowMs] = useState(() => Date.now())
   const [editingWeekly, setEditingWeekly] = useState(false)
   const [editDay, setEditDay] = useState(0)
   const [editHour, setEditHour] = useState(0)
   const [editMinute, setEditMinute] = useState(0)
-  const [toastWeekly, setToastWeekly] = useState(false)
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    tick(Date.now())
+    setNowMs(Date.now())
     const id = setInterval(() => {
-      setTotalSeconds(s => (s > 1 ? s - 1 : TOTAL_5H))
-      setNowMs(Date.now())
+      const now = Date.now()
+      tick(now)
+      setNowMs(now)
     }, 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [tick])
 
-  useEffect(() => {
-    if (editing5h) inputRef5h.current?.focus()
-  }, [editing5h])
-
-  function showToast(setter: (v: boolean) => void) {
-    setter(true)
-    setTimeout(() => setter(false), 2200)
+  function showToast(message: string) {
+    setToastMessage(message)
+    setTimeout(() => setToastMessage(null), 2200)
   }
 
   // cd-5h derived
-  const hours = Math.floor(totalSeconds / 3600)
-  const mins = Math.floor((totalSeconds % 3600) / 60)
-  const secs = totalSeconds % 60
-  const hhmm = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
-  const ss = String(secs).padStart(2, '0')
-  const dashOffset = CIRCUMFERENCE * (1 - totalSeconds / TOTAL_5H)
-  const pct5hRemaining = Math.round((totalSeconds / TOTAL_5H) * 100)
-  const pct5hElapsed = 100 - pct5hRemaining
+  const secsLeft5h    = Math.max(0, Math.floor((fiveHourResetAt - nowMs) / 1000))
+  const totalDur5h    = Math.max(1, Math.floor((fiveHourResetAt - fiveHourSetAt) / 1000))
+  const hours         = Math.floor(secsLeft5h / 3600)
+  const mins          = Math.floor((secsLeft5h % 3600) / 60)
+  const secs          = secsLeft5h % 60
+  const hhmm          = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`
+  const ss            = String(secs).padStart(2, '0')
+  const dashOffset    = CIRCUMFERENCE * (1 - secsLeft5h / totalDur5h)
+  const pct5hRemaining = Math.round((secsLeft5h / totalDur5h) * 100)
+  const pct5hElapsed  = 100 - pct5hRemaining
 
   // cd-1w derived
   const weeklySecsLeft = Math.max(0, Math.floor((weeklyResetAt - nowMs) / 1000))
@@ -117,25 +86,22 @@ export default function Dashboard() {
   const isWeeklyLive = weeklySecsLeft < 3600 && weeklySecsLeft > 0
 
   function open5hEdit() {
-    setInput5h(hhmm)
-    setError5h(null)
+    setEditHour5h(hours)
+    setEditMinute5h(mins)
     setEditing5h(true)
   }
 
   function close5hEdit() {
     setEditing5h(false)
-    setError5h(null)
   }
 
   function save5h() {
-    const parsed = parse5hInput(input5h)
-    if (parsed === null) {
-      setError5h('Enter a valid time between 0:01 and 5:00')
-      return
-    }
-    setTotalSeconds(parsed)
+    const totalSec = Math.min(editHour5h * 3600 + editMinute5h * 60, TOTAL_5H)
+    if (totalSec <= 0) return
+    const now = Date.now()
+    setFiveHour(now + totalSec * 1000, now)
     close5hEdit()
-    showToast(setToast5h)
+    showToast('Timer set')
   }
 
   function openWeeklyEdit() {
@@ -148,10 +114,9 @@ export default function Dashboard() {
 
   function saveWeekly() {
     const newResetAt = computeWeeklyReset(editDay, editHour, editMinute)
-    setWeeklyResetAt(newResetAt)
-    setWeeklySetAt(Date.now())
+    setWeekly(newResetAt, Date.now())
     setEditingWeekly(false)
-    showToast(setToastWeekly)
+    showToast('Reset time updated')
   }
 
   return (
@@ -196,13 +161,6 @@ export default function Dashboard() {
         {/* 5h card */}
         <div className="rounded-xl bg-surface-container-low border border-surface-container shadow-sm overflow-hidden">
 
-          {toast5h && (
-            <div className="mx-5 mt-4 flex items-center gap-1.5 bg-surface-container text-ink-primary px-3 py-2 rounded-lg text-xs font-label-sm">
-              <span className="material-symbols-outlined text-[14px] text-accent-terracotta">check_circle</span>
-              Timer set
-            </div>
-          )}
-
           <div className="p-6 flex flex-col justify-between min-h-35">
             <div className="flex justify-between items-start">
               <div>
@@ -246,20 +204,15 @@ export default function Dashboard() {
                 Set remaining time · max 5:00
               </p>
               <input
-                ref={inputRef5h}
-                type="text"
-                inputMode="numeric"
-                value={input5h}
-                onChange={e => { setInput5h(e.target.value); setError5h(null) }}
-                onKeyDown={e => { if (e.key === 'Enter') save5h(); if (e.key === 'Escape') close5hEdit() }}
-                placeholder="H:MM"
-                className={`w-full text-center text-2xl font-medium tabular-nums font-code-snippet bg-surface-container rounded-lg px-3 py-2.5 border outline-none transition-colors ${
-                  error5h
-                    ? 'border-error text-error'
-                    : 'border-surface-container-high focus:border-accent-terracotta text-ink-primary'
-                }`}
+                type="time"
+                max="05:00"
+                value={`${String(editHour5h).padStart(2, '0')}:${String(editMinute5h).padStart(2, '0')}`}
+                onChange={e => {
+                  const [h, m] = e.target.value.split(':').map(Number)
+                  if (!isNaN(h) && !isNaN(m)) { setEditHour5h(h); setEditMinute5h(m) }
+                }}
+                className="w-full bg-surface-container border border-surface-container-high rounded-lg px-3 py-2.5 font-code-snippet text-sm text-ink-primary outline-none focus:border-accent-terracotta transition-colors"
               />
-              {error5h && <p className="font-label-sm text-xs text-error">{error5h}</p>}
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={close5hEdit}
@@ -269,7 +222,8 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={save5h}
-                  className="flex-1 py-2.5 rounded-full font-label-md text-sm bg-accent-terracotta text-white hover:brightness-105 active:scale-[0.98] transition-all"
+                  disabled={editHour5h === 0 && editMinute5h === 0}
+                  className="flex-1 py-2.5 rounded-full font-label-md text-sm bg-accent-terracotta text-white hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Set Timer
                 </button>
@@ -280,13 +234,6 @@ export default function Dashboard() {
 
         {/* Weekly card */}
         <div className="rounded-xl bg-surface-container-low border border-surface-container shadow-sm overflow-hidden">
-
-          {toastWeekly && (
-            <div className="mx-5 mt-4 flex items-center gap-1.5 bg-surface-container text-ink-primary px-3 py-2 rounded-lg text-xs font-label-sm">
-              <span className="material-symbols-outlined text-[14px] text-accent-terracotta">check_circle</span>
-              Reset time updated
-            </div>
-          )}
 
           <div className="p-6 flex flex-col justify-between min-h-35">
             <div className="flex justify-between items-start">
@@ -384,6 +331,12 @@ export default function Dashboard() {
           <div className="mt-4 w-8 h-px bg-accent-terracotta/40 mx-auto" />
         </div>
       </div>
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-surface-container-low border border-surface-container shadow-lg rounded-xl px-4 py-3 font-label-sm text-sm text-ink-primary">
+          <span className="material-symbols-outlined text-[16px] text-accent-terracotta">check_circle</span>
+          {toastMessage}
+        </div>
+      )}
     </main>
   )
 }
