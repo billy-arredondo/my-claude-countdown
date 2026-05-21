@@ -9,7 +9,7 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
     <button
       onClick={onToggle}
       aria-pressed={enabled}
-      className={`w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0 ml-4 focus:outline-none ${
+      className={`w-12 h-6 rounded-full relative transition-colors duration-200 shrink-0 ml-4 focus:outline-none ${
         enabled ? 'bg-primary-container' : 'bg-surface-variant'
       }`}
     >
@@ -35,7 +35,7 @@ export default function Settings() {
         <section>
           <h2 className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest mb-4">Account</h2>
           <div className="bg-paper-warm border border-on-surface/5 rounded-xl p-6 editorial-shadow flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full bg-surface-container-high flex-shrink-0 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-surface-container-high shrink-0 flex items-center justify-center">
               <span className="font-headline-md text-xl text-primary font-semibold">JT</span>
             </div>
             <div>

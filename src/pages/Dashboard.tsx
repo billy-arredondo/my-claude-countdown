@@ -25,7 +25,7 @@ export default function Dashboard() {
     <main className="px-margin-mobile max-w-2xl mx-auto space-y-gutter py-6 lg:py-8">
       {/* Countdown */}
       <section className="flex flex-col items-center justify-center py-10 bg-surface-container-lowest rounded-xl border border-surface-container shadow-sm">
-        <span className="font-label-sm text-ink-secondary mb-8 uppercase tracking-[0.1em]">Next Reset In</span>
+        <span className="font-label-sm text-ink-secondary mb-8 uppercase tracking-widest">Next Reset In</span>
         <div className="relative flex items-center justify-center w-64 h-64">
           <svg className="w-full h-full" aria-hidden="true">
             <circle
@@ -68,7 +68,7 @@ export default function Dashboard() {
       {/* Stats cards */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
         {/* 5-Hour Window */}
-        <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container shadow-sm flex flex-col justify-between min-h-[140px]">
+        <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container shadow-sm flex flex-col justify-between min-h-35">
           <div className="flex justify-between items-start">
             <div className="flex flex-col">
               <span className="font-headline-md text-lg text-ink-primary">5-Hour Window</span>
@@ -94,7 +94,7 @@ export default function Dashboard() {
         </div>
 
         {/* Weekly Reset */}
-        <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container shadow-sm flex flex-col justify-between min-h-[140px]">
+        <div className="p-6 rounded-xl bg-surface-container-low border border-surface-container shadow-sm flex flex-col justify-between min-h-35">
           <div className="flex justify-between items-start">
             <div className="flex flex-col">
               <span className="font-headline-md text-lg text-ink-primary">Weekly Reset</span>
