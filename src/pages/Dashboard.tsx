@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { useCountdownStore, computeWeeklyReset } from '../stores/countdownStore'
 import { useNowTick } from '../hooks/useNowTick'
 import { useToast } from '../hooks/useToast'
+import { formatTabTime } from '../utils/format'
 import HeroCountdown from '../components/dashboard/HeroCountdown'
 import FiveHourCard from '../components/dashboard/FiveHourCard'
 import WeeklyCard from '../components/dashboard/WeeklyCard'
@@ -19,6 +21,12 @@ export default function Dashboard() {
 
   const secsLeft5h     = Math.max(0, Math.floor((fiveHourResetAt - nowMs) / 1000))
   const weeklySecsLeft = Math.max(0, Math.floor((weeklyResetAt - nowMs) / 1000))
+
+  const APP_TITLE = 'Claude Token Tracker'
+  useEffect(() => {
+    document.title = `${formatTabTime(secsLeft5h)} · ${APP_TITLE}`
+    return () => { document.title = APP_TITLE }
+  }, [secsLeft5h])
 
   function handleSet5h(totalSec: number) {
     const now = Date.now()

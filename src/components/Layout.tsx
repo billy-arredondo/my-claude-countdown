@@ -63,7 +63,7 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
               collapsed ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'
             }`}
           >
-            Claude Token Tracker
+            Claude Tracker
           </span>
         </div>
 
