@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react'
 import type { Page } from '../types'
+import { useLogoSpin } from '../hooks/useLogoSpin'
 
 const NAV_ITEMS: { page: Page; label: string; icon: string }[] = [
   { page: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -39,6 +40,7 @@ interface LayoutProps {
 export default function Layout({ current, onNavigate, children }: LayoutProps) {
   const headerHidden = useScrollHidden()
   const [collapsed, setCollapsed] = useState(false)
+  const logoAnimStyle = useLogoSpin()
 
   return (
     <div className="min-h-screen lg:flex font-body-md">
@@ -51,14 +53,14 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
       >
         {/* Brand */}
         <div
-          className={`flex items-center border-b border-surface-container h-[68px] flex-shrink-0 transition-all duration-300 ${
+          className={`flex items-center border-b border-surface-container h-17 shrink-0 transition-all duration-300 ${
             collapsed ? 'justify-center px-2' : 'gap-3 px-6'
           }`}
         >
-          <span className="material-symbols-outlined text-accent-terracotta flex-shrink-0">sync</span>
+          <span className="material-symbols-outlined text-accent-terracotta shrink-0" style={logoAnimStyle}>sync</span>
           <span
             className={`font-headline-md text-[15px] font-medium text-ink-primary leading-snug whitespace-nowrap overflow-hidden transition-all duration-300 ${
-              collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'
+              collapsed ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'
             }`}
           >
             Claude Token Tracker
@@ -85,14 +87,14 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
                 }`}
               >
                 <span
-                  className="material-symbols-outlined text-[22px] flex-shrink-0"
+                  className="material-symbols-outlined text-[22px] shrink-0"
                   style={active ? { fontVariationSettings: "'FILL' 1" } : undefined}
                 >
                   {icon}
                 </span>
                 <span
                   className={`font-label-md text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${
-                    collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'
+                    collapsed ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'
                   }`}
                 >
                   {label}
@@ -111,10 +113,10 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
               collapsed ? 'justify-center px-2' : 'gap-3 px-4'
             }`}
           >
-            <span className="material-symbols-outlined text-[22px] flex-shrink-0">account_circle</span>
+            <span className="material-symbols-outlined text-[22px] shrink-0">account_circle</span>
             <span
               className={`font-label-md text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${
-                collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'
+                collapsed ? 'max-w-0 opacity-0' : 'max-w-40 opacity-100'
               }`}
             >
               Account
@@ -128,7 +130,7 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
             className="w-full flex items-center justify-center py-3 rounded-xl hover:bg-surface-container transition-colors text-ink-secondary hover:text-ink-primary"
           >
             <span
-              className={`material-symbols-outlined text-[22px] flex-shrink-0 transition-transform duration-300 ${
+              className={`material-symbols-outlined text-[22px] shrink-0 transition-transform duration-300 ${
                 collapsed ? '-rotate-180' : 'rotate-0'
               }`}
             >
@@ -146,7 +148,7 @@ export default function Layout({ current, onNavigate, children }: LayoutProps) {
       >
         <div className="flex items-center justify-between px-margin-mobile py-3">
           <div className="flex items-center gap-2.5">
-            <span className="material-symbols-outlined text-accent-terracotta text-[22px]">sync</span>
+            <span className="material-symbols-outlined text-accent-terracotta text-[22px]" style={logoAnimStyle}>sync</span>
             <span className="font-headline-md text-[15px] font-medium text-ink-primary">
               Claude Token Tracker
             </span>

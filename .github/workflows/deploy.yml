@@ -36,6 +36,9 @@ jobs:
           VITE_SHOW_INSPIRATION: ${{ vars.VITE_SHOW_INSPIRATION }}
           VITE_SHOW_NOTIFICATIONS: ${{ vars.VITE_SHOW_NOTIFICATIONS }}
           VITE_SHOW_SUPPORT_LEGAL: ${{ vars.VITE_SHOW_SUPPORT_LEGAL }}
+          VITE_LOGO_IDLE_MS: ${{ vars.VITE_LOGO_IDLE_MS }}
+          VITE_LOGO_SPIN_DURATION_MS: ${{ vars.VITE_LOGO_SPIN_DURATION_MS }}
+          VITE_LOGO_SPIN_ROTATIONS: ${{ vars.VITE_LOGO_SPIN_ROTATIONS }}
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
