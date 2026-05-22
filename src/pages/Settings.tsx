@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useThemeStore, type Theme } from '../stores/themeStore'
 import { useQuotesStore, QUOTE_INTERVALS, type QuoteIntervalMinutes } from '../stores/quotesStore'
+import { FLAGS } from '../flags'
 
 const THEMES: Theme[] = ['light', 'dark', 'system']
 
@@ -40,18 +41,18 @@ export default function Settings() {
           <h2 className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest mb-4">Account</h2>
           <div className="bg-paper-warm border border-on-surface/5 rounded-xl p-6 editorial-shadow flex items-center gap-5">
             <div className="w-16 h-16 rounded-full bg-surface-container-high shrink-0 flex items-center justify-center">
-              <span className="font-headline-md text-xl text-primary font-semibold">JT</span>
+              <span className="font-headline-md text-xl text-primary font-semibold">BA</span>
             </div>
             <div>
-              <h3 className="font-headline-md text-2xl text-ink-primary">Julian Thorne</h3>
-              <p className="font-body-md text-sm text-ink-secondary">julian.thorne@editorial.ai</p>
-              <p className="font-label-sm text-xs text-primary mt-1">Pro Member • Renewing June 12</p>
+              <h3 className="font-headline-md text-2xl text-ink-primary">Billy Arredondo</h3>
+              <p className="font-body-md text-sm text-ink-secondary">billy.arredondo@example.com</p>
+              <p className="font-label-sm text-xs text-primary mt-1">Pro Member • Renewing May 22</p>
             </div>
           </div>
         </section>
 
         {/* Appearance */}
-        <section>
+        {FLAGS.showAppearance && <section>
           <h2 className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest mb-4">Appearance</h2>
           <div className="bg-paper-warm border border-on-surface/5 rounded-xl p-6 editorial-shadow">
             <div className="flex flex-col gap-4">
@@ -73,10 +74,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* Inspiration */}
-        <section>
+        {FLAGS.showInspiration && <section>
           <h2 className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest mb-4">Inspiration</h2>
           <div className="bg-paper-warm border border-on-surface/5 rounded-xl p-6 editorial-shadow">
             <div className="flex flex-col gap-4">
@@ -98,10 +99,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* Notifications */}
-        <section>
+        {FLAGS.showNotifications && <section>
           <h2 className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest mb-4">Notifications</h2>
           <div className="bg-paper-warm border border-on-surface/5 rounded-xl editorial-shadow overflow-hidden">
             <div className="divide-y divide-on-surface/5">
@@ -125,10 +126,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* Support & Legal */}
-        <section>
+        {FLAGS.showSupportLegal && <section>
           <h2 className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest mb-4">
             Support &amp; Legal
           </h2>
@@ -148,7 +149,7 @@ export default function Settings() {
               </a>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* Version footer */}
         <footer className="text-center py-8">
