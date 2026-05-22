@@ -6,6 +6,15 @@ export function colorForRemaining(pct: number): { bar: string; text: string } {
   return { bar: 'bg-accent-terracotta', text: 'text-accent-terracotta' }
 }
 
+export function formatTabTime(secondsLeft: number): string {
+  const hours = Math.floor(secondsLeft / 3600)
+  const mins  = Math.floor((secondsLeft % 3600) / 60)
+  const secs  = secondsLeft % 60
+  if (secondsLeft >= 3600) return `${hours}h ${String(mins).padStart(2, '0')}m`
+  if (secondsLeft >= 60)   return `${mins}m ${String(secs).padStart(2, '0')}s`
+  return `${secs}s`
+}
+
 export function formatWeeklyTime(seconds: number): string {
   const days = Math.floor(seconds / 86400)
   const hrs = Math.floor((seconds % 86400) / 3600)
