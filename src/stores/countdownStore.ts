@@ -4,6 +4,13 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 export const TOTAL_5H = 5 * 60 * 60
 export const TOTAL_1W = 7 * 24 * 60 * 60
 
+export function computeNextHHMM(hour: number, minute: number, fromMs = Date.now()): number {
+  const target = new Date(fromMs)
+  target.setHours(hour, minute, 0, 0)
+  if (target.getTime() <= fromMs) target.setDate(target.getDate() + 1)
+  return target.getTime()
+}
+
 export function computeWeeklyReset(dayOfWeek: number, hour: number, minute: number): number {
   const now = new Date()
   let daysUntil = (dayOfWeek - now.getDay() + 7) % 7
