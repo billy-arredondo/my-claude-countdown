@@ -10,8 +10,8 @@ function formatHeroTime(secondsLeft: number): { value: string; unit: string }[] 
   const secs  = secondsLeft % 60
 
   if (secondsLeft >= 3600) return [
-    { value: String(hours), unit: 'h' },
-    { value: String(mins),  unit: 'm' },
+    { value: String(hours),                  unit: 'h' },
+    { value: String(mins).padStart(2, '0'),  unit: 'm' },
   ]
   if (secondsLeft >= 60) return [
     { value: String(mins),                  unit: 'm' },
