@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useThemeStore, type Theme } from '../stores/themeStore'
+import { useQuotesStore, QUOTE_INTERVALS, type QuoteIntervalMinutes } from '../stores/quotesStore'
 
 const THEMES: Theme[] = ['light', 'dark', 'system']
 
@@ -24,6 +25,9 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
 export default function Settings() {
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
+  const intervalMs = useQuotesStore((s) => s.intervalMs)
+  const setIntervalMinutes = useQuotesStore((s) => s.setIntervalMinutes)
+  const activeMin = (intervalMs / 60_000) as QuoteIntervalMinutes
   const [notif5min, setNotif5min] = useState(true)
   const [notifReset, setNotifReset] = useState(false)
 
@@ -64,6 +68,31 @@ export default function Settings() {
                     }`}
                   >
                     {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Inspiration */}
+        <section>
+          <h2 className="font-label-sm text-xs text-ink-secondary uppercase tracking-widest mb-4">Inspiration</h2>
+          <div className="bg-paper-warm border border-on-surface/5 rounded-xl p-6 editorial-shadow">
+            <div className="flex flex-col gap-4">
+              <label className="font-body-md text-base text-ink-primary">Quote refresh interval</label>
+              <div className="flex p-1 bg-surface-secondary rounded-lg w-full">
+                {QUOTE_INTERVALS.map(min => (
+                  <button
+                    key={min}
+                    onClick={() => setIntervalMinutes(min)}
+                    className={`flex-1 py-2 px-3 rounded-md font-label-md text-sm transition-all ${
+                      activeMin === min
+                        ? 'bg-background text-primary shadow-sm'
+                        : 'text-ink-secondary hover:text-ink-primary'
+                    }`}
+                  >
+                    {min < 60 ? `${min} min` : '1 hr'}
                   </button>
                 ))}
               </div>
