@@ -28,9 +28,8 @@ export default function Dashboard() {
     return () => { document.title = APP_TITLE }
   }, [secsLeft5h])
 
-  function handleSet5h(totalSec: number) {
-    const now = Date.now()
-    setFiveHour(now + totalSec * 1000, now)
+  function handleSet5h(resetAt: number) {
+    setFiveHour(resetAt, Date.now())
     toast.show('Timer set')
   }
 
@@ -43,7 +42,7 @@ export default function Dashboard() {
     <main className="px-margin-mobile max-w-2xl mx-auto space-y-gutter py-6 lg:py-8">
       <HeroCountdown secondsLeft={secsLeft5h} />
       <section className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-        <FiveHourCard secondsLeft={secsLeft5h} onSet={handleSet5h} />
+        <FiveHourCard secondsLeft={secsLeft5h} resetAt={fiveHourResetAt} onSet={handleSet5h} />
         <WeeklyCard
           secondsLeft={weeklySecsLeft}
           resetAt={weeklyResetAt}
