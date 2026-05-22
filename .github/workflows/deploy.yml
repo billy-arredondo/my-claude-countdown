@@ -31,6 +31,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+        env:
+          VITE_SHOW_APPEARANCE: ${{ vars.VITE_SHOW_APPEARANCE }}
+          VITE_SHOW_INSPIRATION: ${{ vars.VITE_SHOW_INSPIRATION }}
+          VITE_SHOW_NOTIFICATIONS: ${{ vars.VITE_SHOW_NOTIFICATIONS }}
+          VITE_SHOW_SUPPORT_LEGAL: ${{ vars.VITE_SHOW_SUPPORT_LEGAL }}
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
