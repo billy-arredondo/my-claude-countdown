@@ -7,7 +7,7 @@ import EditFormActions from '../ui/EditFormActions'
 type Props = {
   secondsLeft: number
   resetAt: number
-  onSet: (resetAt: number) => void
+  onSet: (resetAt: number, nextResetAt?: number) => void
 }
 
 export default function FiveHourCard({ secondsLeft, resetAt, onSet }: Props) {
@@ -36,6 +36,7 @@ export default function FiveHourCard({ secondsLeft, resetAt, onSet }: Props) {
 
   function save() {
     let newResetAt: number
+    let nextResetAt: number | undefined
     if (editMode === 'duration') {
       const totalSec = Math.min(editHour * 3600 + editMinute * 60, TOTAL_5H)
       if (totalSec <= 0) return
@@ -43,8 +44,9 @@ export default function FiveHourCard({ secondsLeft, resetAt, onSet }: Props) {
     } else {
       const target = computeNextHHMM(endHour, endMinute)
       newResetAt = Math.min(target, Date.now() + TOTAL_5H * 1000)
+      nextResetAt = newResetAt + TOTAL_5H * 1000
     }
-    onSet(newResetAt)
+    onSet(newResetAt, nextResetAt)
     setEditing(false)
   }
 

@@ -36,9 +36,10 @@ function initWeeklyState() {
 interface CountdownStore {
   fiveHourResetAt: number
   fiveHourSetAt: number
+  fiveHourNextResetAt: number | null
   weeklyResetAt: number
   weeklySetAt: number
-  setFiveHour: (resetAt: number, setAt: number) => void
+  setFiveHour: (resetAt: number, setAt: number, nextResetAt?: number | null) => void
   setWeekly: (resetAt: number, setAt: number) => void
   tick: (now: number) => void
 }
@@ -51,16 +52,25 @@ export const useCountdownStore = create<CountdownStore>()(
     (set, get) => ({
       fiveHourResetAt: INITIAL_NOW + TOTAL_5H * 1000,
       fiveHourSetAt: INITIAL_NOW,
+      fiveHourNextResetAt: null,
       weeklyResetAt: INITIAL_WEEKLY.resetAt,
       weeklySetAt: INITIAL_WEEKLY.setAt,
-      setFiveHour: (resetAt, setAt) => set({ fiveHourResetAt: resetAt, fiveHourSetAt: setAt }),
+      setFiveHour: (resetAt, setAt, nextResetAt = null) => set({ fiveHourResetAt: resetAt, fiveHourSetAt: setAt, fiveHourNextResetAt: nextResetAt }),
       setWeekly: (resetAt, setAt) => set({ weeklyResetAt: resetAt, weeklySetAt: setAt }),
       tick: (now) => {
-        const { fiveHourResetAt, weeklyResetAt } = get()
-        const updates: Partial<Pick<CountdownStore, 'fiveHourResetAt' | 'fiveHourSetAt' | 'weeklyResetAt' | 'weeklySetAt'>> = {}
+        const { fiveHourResetAt, fiveHourNextResetAt, weeklyResetAt } = get()
+        const updates: Partial<Pick<CountdownStore, 'fiveHourResetAt' | 'fiveHourSetAt' | 'fiveHourNextResetAt' | 'weeklyResetAt' | 'weeklySetAt'>> = {}
         if (now >= fiveHourResetAt) {
-          updates.fiveHourResetAt = now + TOTAL_5H * 1000
-          updates.fiveHourSetAt = now
+          if (fiveHourNextResetAt !== null) {
+            let next = fiveHourNextResetAt
+            while (next <= now) next += TOTAL_5H * 1000
+            updates.fiveHourResetAt = next
+            updates.fiveHourSetAt = next - TOTAL_5H * 1000
+            updates.fiveHourNextResetAt = next + TOTAL_5H * 1000
+          } else {
+            updates.fiveHourResetAt = now + TOTAL_5H * 1000
+            updates.fiveHourSetAt = now
+          }
         }
         if (now >= weeklyResetAt) {
           const d = new Date(weeklyResetAt)
@@ -77,6 +87,7 @@ export const useCountdownStore = create<CountdownStore>()(
       partialize: (state) => ({
         fiveHourResetAt: state.fiveHourResetAt,
         fiveHourSetAt: state.fiveHourSetAt,
+        fiveHourNextResetAt: state.fiveHourNextResetAt,
         weeklyResetAt: state.weeklyResetAt,
         weeklySetAt: state.weeklySetAt,
       }),
